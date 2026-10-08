@@ -1,16 +1,20 @@
 /** Done Chime: an 8-bit jingle at the end of every main-loop turn, picked and toggled with /chime. */
 
+import { atom, read, update } from 'claude-code'
 import type { EngineInterface, Register } from 'claude-code'
 
-import { DEFAULT_JINGLE, JINGLES, OOPS, clip, isJingle } from './chime'
+import { BLURBS, DEFAULT_JINGLE, JINGLES, OOPS, clip, isJingle } from './chime'
 import type { Clip, Jingle } from './chime'
 
 const COMMAND = 'chime'
 const STORE_JINGLE = 'jingle'
 const STORE_ON = 'isOn'
 const GAIN = 0.6
+const BOARD = 'done-chime'
+const BOARD_TITLE = 'Done Chime'
+const picked = atom({ plugin: 'done-chime', key: 'picked' } as const, null)
 
-const HELP = `/${COMMAND} ${JINGLES.join('|')} picks the jingle; /${COMMAND} test plays it; /${COMMAND} off|on mutes or unmutes.`
+const HELP = `/${COMMAND} opens the board to click a jingle; /${COMMAND} ${JINGLES.join('|')} picks one by name; /${COMMAND} test plays it; /${COMMAND} off|on mutes or unmutes.`
 
 type Settings = { jingle: Jingle; isOn: boolean }
 
@@ -49,25 +53,72 @@ export const register: Register = on => {
     return next(e)
   })
 
+  on('ui.render', { component: 'Pane', requestId: BOARD }, async ($, e) => {
+    const { Box, Text, Button } = $.ui.resolve(e)
+    const stored = await settings($)
+    const chosen = (await read($, picked)) ?? stored.jingle
+    return (
+      <Box flexDirection="column" gap={1}>
+        <Text dimColor>Click a sound to hear it and make it the one that plays when Claude finishes.</Text>
+        <Box flexDirection="column">
+          {JINGLES.map(name => (
+            <Button
+              key={name}
+              variant={name === chosen ? 'primary' : undefined}
+              onPress={async () => {
+                await $.store.set(STORE_JINGLE, name)
+                await update($, picked, () => name)
+                void play($, name)
+              }}
+            >
+              {`${name === chosen ? '> ' : '  '}${name.padEnd(8)} ${BLURBS[name]}`}
+            </Button>
+          ))}
+        </Box>
+        <Box gap={2}>
+          <Button
+            key="mute"
+            onPress={async () => {
+              await $.store.set(STORE_ON, !stored.isOn)
+              await update($, picked, () => chosen)
+            }}
+          >
+            {stored.isOn ? 'Sound on: click to mute' : 'Muted: click to unmute'}
+          </Button>
+          <Button key="oops" dimColor onPress={() => void play($, OOPS)}>
+            Hear the error drop
+          </Button>
+        </Box>
+      </Box>
+    )
+  })
+
   on('command.run', { command: COMMAND }, async ($, e) => {
     const arg = e.args.trim().toLowerCase()
     const current = await settings($)
 
     if (arg === 'off') {
       await $.store.set(STORE_ON, false)
+      await update($, picked, v => v)
       return { text: 'Done Chime: muted. /chime on brings it back.' }
     }
     if (arg === 'on') {
       await $.store.set(STORE_ON, true)
+      await update($, picked, v => v)
       void play($, current.jingle)
       return { text: `Done Chime: on, playing "${current.jingle}" when Claude finishes.` }
     }
-    if (arg === '' || arg === 'test') {
+    if (arg === 'test') {
       void play($, current.jingle)
       return { text: `Done Chime: "${current.jingle}"${current.isOn ? '' : ' (muted; /chime on to unmute)'}. ${HELP}` }
     }
+    if (arg === '' || arg === 'board') {
+      await $.ui.open({ id: BOARD, title: BOARD_TITLE })
+      return { text: `Done Chime: board open, currently "${current.jingle}"${current.isOn ? '' : ' (muted)'}.` }
+    }
     if (isJingle(arg)) {
       await $.store.set(STORE_JINGLE, arg)
+      await update($, picked, () => arg)
       void play($, arg)
       return { text: `Done Chime: now "${arg}"${current.isOn ? '' : ' (still muted; /chime on to unmute)'}.` }
     }

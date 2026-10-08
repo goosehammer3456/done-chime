@@ -70,11 +70,18 @@ describe('what plays', () => {
       played.push(e.clip.mime ?? 'asset')
       return { value: undefined } as never
     })
+    let opened = 0
+    on('ui.open', async () => {
+      opened++
+      return { value: undefined } as never
+    })
     const origin = { kind: 'composer' } as const
     const presentation = { isFullscreen: false, columns: 100 }
     const run = async (args: string) => (await $.command.run({ command: 'chime', args, origin, presentation })).text ?? ''
     expect(await run('levelup')).toContain('now "levelup"')
-    expect(await run('')).toContain('"levelup"')
+    expect(await run('')).toContain('board open, currently "levelup"')
+    expect(opened).toBe(1)
+    expect(await run('test')).toContain('"levelup"')
     expect(await run('off')).toContain('muted')
     expect(await run('test')).toContain('muted')
     expect(await run('on')).toContain('on, playing "levelup"')
