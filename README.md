@@ -7,7 +7,10 @@ An 8-bit jingle when Claude finishes a turn. No sound files: the tunes are squar
 | `coin` (default) | the coin pickup: a quick hop to a held high note |
 | `levelup` | the 1-up: a major arpeggio climbing two octaves |
 | `powerup` | a rising sweep that lands on the top note |
-| `secret` | the secret-found flourish |
+| `secret` | the secret-found flourish (it is the Zelda secret chime) |
+| `rupee` | Zelda: picking up a rupee |
+| `itemget` | Zelda: the item-get fanfare, three rising notes and a held one |
+| `navi` | Zelda: Navi's "Hey!" |
 
 An interrupted turn or one that died on an API error gets a two-note drop instead, so you can tell from the next room whether it finished or fell over. Subagent turns are silent. Only the main loop chimes.
 
@@ -15,7 +18,7 @@ An interrupted turn or one that died on an API error gets a two-note drop instea
 
 ```
 /chime              play the current jingle and show the settings
-/chime levelup      pick a jingle (coin | levelup | powerup | secret)
+/chime levelup      pick a jingle (coin | levelup | powerup | secret | rupee | itemget | navi)
 /chime test         play it again
 /chime off          mute
 /chime on           unmute

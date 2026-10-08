@@ -3,7 +3,7 @@
 export const RATE = 22050
 
 /** The jingles on offer, each a short square-wave tune. */
-export const JINGLES = ['coin', 'levelup', 'powerup', 'secret'] as const
+export const JINGLES = ['coin', 'levelup', 'powerup', 'secret', 'rupee', 'itemget', 'navi'] as const
 export type Jingle = (typeof JINGLES)[number]
 export const DEFAULT_JINGLE: Jingle = 'coin'
 
@@ -128,6 +128,12 @@ const TUNES: Record<Clip, () => Float32Array> = {
   powerup: () => joined(sweep(midi(60), midi(84), 260), square([{ hz: midi(84), ms: 60 }, { hz: midi(88), ms: 240 }], 1.4)),
   // Secret found: the classic descending-then-rising flourish.
   secret: () => square([79, 78, 75, 69, 68, 76, 80, 84].map(n => ({ hz: midi(n), ms: 75 })), 0.5),
+  // Rupee: two bright notes, the second held, like picking one up.
+  rupee: () => square([{ hz: midi(91), ms: 60 }, { hz: midi(98), ms: 300 }], 1.4),
+  // Item get: three rising pickup notes, then the held fanfare note.
+  itemget: () => square([67, 71, 74].map(n => ({ hz: midi(n), ms: 100 })).concat({ hz: midi(79), ms: 550 }), 1),
+  // Navi: the "Hey!" blip, a low-to-high pair with a rest between.
+  navi: () => square([{ hz: midi(93), ms: 70 }, { hz: 0, ms: 40 }, { hz: midi(100), ms: 220 }], 1.4),
   // Oops: two dropping notes for an interrupted or failed turn.
   oops: () => square([{ hz: midi(64), ms: 140 }, { hz: midi(58), ms: 260 }], 1.2),
 }
