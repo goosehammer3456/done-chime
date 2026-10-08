@@ -1,0 +1,12 @@
+{
+  "name": "done-chime",
+  "description": "An 8-bit jingle when Claude finishes a turn",
+  "owner": { "name": "Bruce Johnson" },
+  "plugins": [
+    {
+      "name": "done-chime",
+      "source": "./",
+      "description": "An 8-bit jingle when Claude finishes a turn: coin, 1-up, power-up or secret, picked with /chime"
+    }
+  ]
+}

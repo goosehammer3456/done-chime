@@ -1,0 +1,10 @@
+{
+  "name": "done-chime",
+  "version": "0.1.0",
+  "description": "An 8-bit jingle when Claude finishes a turn. /chime [coin|levelup|powerup|secret|off|on|test]",
+  "license": "MIT",
+  "author": { "name": "Bruce Johnson" },
+  "homepage": "https://github.com/goosehammer23/done-chime",
+  "repository": "https://github.com/goosehammer23/done-chime",
+  "displayName": "Done Chime"
+}
