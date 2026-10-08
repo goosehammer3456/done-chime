@@ -20,10 +20,10 @@ type Settings = { jingle: Jingle; isOn: boolean }
 /** What the person last chose, from the cross-session store; the defaults until they choose. */
 async function settings($: EngineInterface): Promise<Settings> {
   const stored = await $.store.get(STORE_JINGLE)
-  const on = await $.store.get(STORE_ON)
+  const stateOn = await $.store.get(STORE_ON)
   return {
     jingle: typeof stored === 'string' && isJingle(stored) ? stored : DEFAULT_JINGLE,
-    isOn: on !== false,
+    isOn: stateOn !== false,
   }
 }
 
