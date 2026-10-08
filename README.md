@@ -30,6 +30,10 @@ The board is a pane listing every jingle. Clicking one plays it and saves it as 
 
 Everything runs inside Claude Code; nothing is fetched or sent anywhere. The mod hooks `session.start` to register `/chime`, `turn.complete` to play the jingle through the host's audio call, `ui.render` to draw the board, and `command.run` to handle `/chime` itself (it only answers `/chime`; other commands pass through untouched). It stores two values locally: your chosen jingle and the mute flag.
 
+## Privacy
+
+Done Chime collects no data and makes no network requests. It stores two settings (your chosen jingle and whether it is muted) in Claude Code's local store on your machine. Nothing is sent to the author or any third party.
+
 ## Install
 
 In a Claude Code terminal session:
