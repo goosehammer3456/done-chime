@@ -31,10 +31,10 @@ The board is a pane listing every jingle. Clicking one plays it and saves it as 
 In a Claude Code terminal session:
 
 ```
-/plugin install done-chime --marketplace goosehammer23/done-chime
+/plugin install done-chime --marketplace goosehammer3456/done-chime
 ```
 
-Answer `y` to add the marketplace, then pick a scope. The repo is private, so this needs GitHub credentials that can read it (`gh auth login` is enough).
+Answer `y` to add the marketplace, then pick a scope.
 
 To run a checkout for one session instead:
 
