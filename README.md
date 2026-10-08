@@ -26,6 +26,10 @@ An interrupted turn or one that died on an API error gets a two-note drop instea
 
 The board is a pane listing every jingle. Clicking one plays it and saves it as your choice; the selected one is marked, and there are buttons to mute and to hear the error drop. The choice and the mute are kept across sessions.
 
+## What it runs
+
+Everything runs inside Claude Code; nothing is fetched or sent anywhere. The mod hooks `session.start` to register `/chime`, `turn.complete` to play the jingle through the host's audio call, `ui.render` to draw the board, and `command.run` to handle `/chime` itself (it only answers `/chime`; other commands pass through untouched). It stores two values locally: your chosen jingle and the mute flag.
+
 ## Install
 
 In a Claude Code terminal session:
