@@ -1,6 +1,5 @@
 /** Done Chime: an 8-bit jingle at the end of every main-loop turn, picked and toggled with /chime. */
 
-import { atom, read, update } from 'claude-code'
 import type { EngineInterface, Register } from 'claude-code'
 
 import { BLURBS, DEFAULT_JINGLE, JINGLES, OOPS, clip, isJingle } from './chime'
@@ -12,7 +11,7 @@ const STORE_ON = 'isOn'
 const GAIN = 0.6
 const BOARD = 'done-chime'
 const BOARD_TITLE = 'Done Chime'
-const picked = atom({ plugin: 'done-chime', key: 'picked' } as const, null)
+const PICKED = { plugin: 'done-chime', key: 'picked' } as const
 
 const HELP = `/${COMMAND} opens the board to click a jingle; /${COMMAND} ${JINGLES.join('|')} picks one by name; /${COMMAND} test plays it; /${COMMAND} off|on mutes or unmutes.`
 
@@ -26,6 +25,12 @@ const settings = async ($: EngineInterface): Promise<Settings> => {
     jingle: typeof stored === 'string' && isJingle(stored) ? stored : DEFAULT_JINGLE,
     isOn: on !== false,
   }
+}
+
+/** Writes the picked value back as it stands, so the board draws again after a change that lives in the store. */
+const touch = async ($: EngineInterface) => {
+  const held = await $.state.get(PICKED)
+  await $.state.set(PICKED, held.value ?? null)
 }
 
 /** Plays one clip now; a missing audio device or a refused clip is not the turn's problem. */
@@ -56,7 +61,8 @@ export const register: Register = on => {
   on('ui.render', { component: 'Pane', requestId: BOARD }, async ($, e) => {
     const { Box, Text, Button } = $.ui.resolve(e)
     const stored = await settings($)
-    const chosen = (await read($, picked)) ?? stored.jingle
+    const held = await $.state.get(PICKED)
+    const chosen = held.value ?? stored.jingle
     return (
       <Box flexDirection="column" gap={1}>
         <Text dimColor>Click a sound to hear it and make it the one that plays when Claude finishes.</Text>
@@ -67,7 +73,7 @@ export const register: Register = on => {
               variant={name === chosen ? 'primary' : undefined}
               onPress={async () => {
                 await $.store.set(STORE_JINGLE, name)
-                await update($, picked, () => name)
+                await $.state.set(PICKED, name)
                 void play($, name)
               }}
             >
@@ -80,7 +86,7 @@ export const register: Register = on => {
             key="mute"
             onPress={async () => {
               await $.store.set(STORE_ON, !stored.isOn)
-              await update($, picked, () => chosen)
+              await $.state.set(PICKED, chosen)
             }}
           >
             {stored.isOn ? 'Sound on: click to mute' : 'Muted: click to unmute'}
@@ -99,12 +105,12 @@ export const register: Register = on => {
 
     if (arg === 'off') {
       await $.store.set(STORE_ON, false)
-      await update($, picked, v => v)
+      await touch($)
       return { text: 'Done Chime: muted. /chime on brings it back.' }
     }
     if (arg === 'on') {
       await $.store.set(STORE_ON, true)
-      await update($, picked, v => v)
+      await touch($)
       void play($, current.jingle)
       return { text: `Done Chime: on, playing "${current.jingle}" when Claude finishes.` }
     }
@@ -118,7 +124,7 @@ export const register: Register = on => {
     }
     if (isJingle(arg)) {
       await $.store.set(STORE_JINGLE, arg)
-      await update($, picked, () => arg)
+      await $.state.set(PICKED, arg)
       void play($, arg)
       return { text: `Done Chime: now "${arg}"${current.isOn ? '' : ' (still muted; /chime on to unmute)'}.` }
     }
