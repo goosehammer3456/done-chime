@@ -17,14 +17,14 @@ An interrupted turn or one that died on an API error gets a two-note drop instea
 ## Commands
 
 ```
-/chime              play the current jingle and show the settings
-/chime levelup      pick a jingle (coin | levelup | powerup | secret | rupee | itemget | navi)
-/chime test         play it again
+/chime              open the board: click any sound to hear it and make it the one
+/chime levelup      pick a jingle by name (coin | levelup | powerup | secret | rupee | itemget | navi)
+/chime test         play the current one again
 /chime off          mute
 /chime on           unmute
 ```
 
-The choice and the mute are kept across sessions.
+The board is a pane listing every jingle. Clicking one plays it and saves it as your choice; the selected one is marked, and there are buttons to mute and to hear the error drop. The choice and the mute are kept across sessions.
 
 ## Install
 

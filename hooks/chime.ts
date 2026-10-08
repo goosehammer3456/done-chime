@@ -11,6 +11,17 @@ export const DEFAULT_JINGLE: Jingle = 'coin'
 export const OOPS = 'oops'
 export type Clip = Jingle | typeof OOPS
 
+/** What each jingle is, for the board. */
+export const BLURBS: Record<Jingle, string> = {
+  coin: 'Coin pickup',
+  levelup: '1-up arpeggio',
+  powerup: 'Power-up rise',
+  secret: 'Zelda secret found',
+  rupee: 'Zelda rupee',
+  itemget: 'Zelda item get',
+  navi: 'Zelda: Navi, "Hey!"',
+}
+
 export const isJingle = (s: string): s is Jingle => (JINGLES as readonly string[]).includes(s)
 
 const B64 = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/'
