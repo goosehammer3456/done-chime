@@ -18,7 +18,7 @@ const HELP = `/${COMMAND} opens the board to click a jingle; /${COMMAND} ${JINGL
 type Settings = { jingle: Jingle; isOn: boolean }
 
 /** What the person last chose, from the cross-session store; the defaults until they choose. */
-const settings = async ($: EngineInterface): Promise<Settings> => {
+async function settings($: EngineInterface): Promise<Settings> {
   const stored = await $.store.get(STORE_JINGLE)
   const on = await $.store.get(STORE_ON)
   return {
@@ -28,17 +28,54 @@ const settings = async ($: EngineInterface): Promise<Settings> => {
 }
 
 /** Writes the picked value back as it stands, so the board draws again after a change that lives in the store. */
-const touch = async ($: EngineInterface) => {
+async function touch($: EngineInterface) {
   const held = await $.state.get(PICKED)
   await $.state.set(PICKED, held.value ?? null)
 }
 
 /** Plays one clip now; a missing audio device or a refused clip is not the turn's problem. */
-const play = ($: EngineInterface, name: Clip) =>
-  $.audio.play({ base64: clip(name), mime: 'audio/wav' }, { gain: GAIN }).catch(() => undefined)
+async function play($: EngineInterface, name: Clip) {
+  try {
+    await $.audio.play({ base64: clip(name), mime: 'audio/wav' }, { gain: GAIN })
+  } catch {
+    // no audio device or a refused clip: nothing to do
+  }
+}
 
 /** Which clip a finished turn gets: the chosen jingle, or the oops drop when it was cut short. */
 export const clipFor = (reason: string, jingle: Jingle): Clip => (reason === 'answer' || reason === 'refusal' ? jingle : OOPS)
+
+async function runCommand($: EngineInterface, args: string) {
+  const arg = args.trim().toLowerCase()
+  const current = await settings($)
+
+  if (arg === 'off') {
+    await $.store.set(STORE_ON, false)
+    await touch($)
+    return { text: 'Done Chime: muted. /chime on brings it back.' }
+  }
+  if (arg === 'on') {
+    await $.store.set(STORE_ON, true)
+    await touch($)
+    void play($, current.jingle)
+    return { text: `Done Chime: on, playing "${current.jingle}" when Claude finishes.` }
+  }
+  if (arg === 'test') {
+    void play($, current.jingle)
+    return { text: `Done Chime: "${current.jingle}"${current.isOn ? '' : ' (muted; /chime on to unmute)'}. ${HELP}` }
+  }
+  if (arg === '' || arg === 'board') {
+    await $.ui.open({ id: BOARD, title: BOARD_TITLE })
+    return { text: `Done Chime: board open, currently "${current.jingle}"${current.isOn ? '' : ' (muted)'}.` }
+  }
+  if (isJingle(arg)) {
+    await $.store.set(STORE_JINGLE, arg)
+    await $.state.set(PICKED, arg)
+    void play($, arg)
+    return { text: `Done Chime: now "${arg}"${current.isOn ? '' : ' (still muted; /chime on to unmute)'}.` }
+  }
+  return { text: `Done Chime: "${arg}" is not a jingle. ${HELP}` }
+}
 
 export const register: Register = on => {
   on('session.start', async ($, e, next) => {
@@ -99,35 +136,7 @@ export const register: Register = on => {
     )
   })
 
-  on('command.run', { command: COMMAND }, async ($, e) => {
-    const arg = e.args.trim().toLowerCase()
-    const current = await settings($)
-
-    if (arg === 'off') {
-      await $.store.set(STORE_ON, false)
-      await touch($)
-      return { text: 'Done Chime: muted. /chime on brings it back.' }
-    }
-    if (arg === 'on') {
-      await $.store.set(STORE_ON, true)
-      await touch($)
-      void play($, current.jingle)
-      return { text: `Done Chime: on, playing "${current.jingle}" when Claude finishes.` }
-    }
-    if (arg === 'test') {
-      void play($, current.jingle)
-      return { text: `Done Chime: "${current.jingle}"${current.isOn ? '' : ' (muted; /chime on to unmute)'}. ${HELP}` }
-    }
-    if (arg === '' || arg === 'board') {
-      await $.ui.open({ id: BOARD, title: BOARD_TITLE })
-      return { text: `Done Chime: board open, currently "${current.jingle}"${current.isOn ? '' : ' (muted)'}.` }
-    }
-    if (isJingle(arg)) {
-      await $.store.set(STORE_JINGLE, arg)
-      await $.state.set(PICKED, arg)
-      void play($, arg)
-      return { text: `Done Chime: now "${arg}"${current.isOn ? '' : ' (still muted; /chime on to unmute)'}.` }
-    }
-    return { text: `Done Chime: "${arg}" is not a jingle. ${HELP}` }
-  }).catch(() => ({ text: 'Done Chime: could not read or save its settings this time.' }))
+  on('command.run', { command: COMMAND }, ($, e) => runCommand($, e.args)).catch(() => ({
+    text: 'Done Chime: could not read or save its settings this time.',
+  }))
 }
